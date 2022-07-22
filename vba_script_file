@@ -1,0 +1,149 @@
+Attribute VB_Name = "Module1"
+Sub Stocks():
+
+'Define variables
+
+Dim ticker As String
+Dim yearlychange As Double
+Dim openprice As Double
+Dim closeprice As Double
+Dim percentchange As Double
+Dim totalstockvol As Double
+
+Dim summary_table_row As Integer
+Dim ws As Worksheet
+
+'loop worksheet
+
+For Each ws In Worksheets
+'Assign headers
+    ws.Range("I1").Value = "Ticker"
+    ws.Range("J1").Value = "Yearly Change"
+    ws.Range("K1").Value = "Percent Change"
+    ws.Range("L1").Value = "Total Stock Volume"
+    
+'Assign integers
+    summary_table_row = 2
+    tickercount = 1
+    totalstockvol = 0
+    
+'lastrow
+    lastrow = ws.Cells(Rows.Count, "A").End(xlUp).Row
+    
+'Loop
+    For i = 2 To lastrow
+'Ticker Symbol
+        If ws.Cells(i + 1, 1).Value <> ws.Cells(i, 1).Value Then
+            ticker = ws.Cells(i, 1).Value
+            tickercount = tickercount + 1
+'Retrieve value of openprice and closeprice
+        openprice = ws.Cells(tickercount, 3).Value
+        closeprice = ws.Cells(i, 6).Value
+'Retrieve value for totalstockvol
+        For j = tickercount To i
+            totalstockvol = totalstockvol + ws.Cells(j, 7).Value
+        Next j
+'When loop gets value zero and retrieve yearlychange and percentchange
+            If openprice = 0 Then
+                percentchange = closeprice
+            Else
+                yearlychange = closeprice - openprice
+'Color in yearlychange values
+                If (yearlychange > 0) Then
+                    ws.Range("J" & summary_table_row).Interior.ColorIndex = 4
+                ElseIf (yearlychange < 0) Then
+                    ws.Range("J" & summary_table_row).Interior.ColorIndex = 3
+                Else
+                    ws.Range("J" & summary_table_row).Interior.ColorIndex = 2
+                End If
+                percentchange = yearlychange / openprice
+            End If
+        
+'Collect Values
+            ws.Cells(summary_table_row, 9).Value = ticker
+            ws.Cells(summary_table_row, 10).Value = yearlychange
+            ws.Cells(summary_table_row, 11).Value = percentchange
+                ws.Cells(summary_table_row, 11).NumberFormat = "0.00%"
+            ws.Cells(summary_table_row, 12).Value = totalstockvol
+        
+'Summary table go next when new
+            summary_table_row = summary_table_row + 1
+
+'Variable back to zero's or initial
+            totalstockvol = 0
+            yearlychange = 0
+            percentchange = 0
+            tickercount = i
+        End If
+    Next i
+    
+ 
+    lastrow_k = ws.Cells(Rows.Count, "K").End(xlUp).Row
+    
+    Increase = 0
+    Decrease = 0
+    Greatest = 0
+    
+    For k = 3 To lastrow_k
+
+'Define variables
+        pre_k = k - 1
+        currentk = ws.Cells(k, 11).Value
+        prev_k = ws.Cells(pre_k, 11).Value
+        volume = ws.Cells(k, 12).Value
+        prev_volume = ws.Cells(pre_k, 12).Value
+        
+'Retrieve increase
+        If Increase > currentk And Increase > prev_k Then
+            Increase = Increase
+        ElseIf currentk > Increase And currentk > prev_k Then
+            Increase = currentk
+            increase_num = ws.Cells(k, 9).Value
+        ElseIf prev_k > Increase And prev_k > currentk Then
+            Increase = prev_k
+            increase_num = ws.Cells(pre_k, 9).Value
+        End If
+        
+'Retrieve decrease
+        If Decrease < currentk And Decrease < prev_k Then
+            Decrease = Decrease
+        ElseIf currentk < Increase And currentk < prev_k Then
+            Decrease = currentk
+            decrease_num = ws.Cells(k, 9).Value
+        ElseIf prev_k < Increase And prev_k < currentk Then
+            Decrease = prev_k
+            decrease_num = ws.Cells(pre_k, 9).Value
+        End If
+        
+ 'Retrieve greatest
+        If Greatest > volume And Greatest > prev_volume Then
+            Greatest = Greatest
+        ElseIf volume > Greatest And volume > prev_volume Then
+            Greatest = volume
+            greatest_num = ws.Cells(k, 9).Value
+        ElseIf prev_volume > Greatest And prev_volume > volume Then
+            Greatest = prev_volume
+            greatest_num = ws.Cells(pre_k, 9).Value
+        End If
+    Next k
+    
+'Assign names
+    ws.Range("N1").Value = "Column Name"
+    ws.Range("N2").Value = "Greatest % Increase"
+    ws.Range("N3").Value = "Greatest % Decrease"
+    ws.Range("N4").Value = "Greatest Total Volume"
+    ws.Range("O1").Value = "Ticker Name"
+    ws.Range("P1").Value = "Value"
+    
+'Put in values
+    ws.Range("O2").Value = increase_num
+    ws.Range("O3").Value = decrease_num
+    ws.Range("O4").Value = greatest_num
+    ws.Range("P2").Value = Increase
+        ws.Range("P2").NumberFormat = "0.00%"
+    ws.Range("P3").Value = Decrease
+        ws.Range("P3").NumberFormat = "0.00%"
+    ws.Range("P4").Value = Greatest
+    
+Next ws
+End Sub
